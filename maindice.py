@@ -25,8 +25,6 @@ A <b>COMPLETELY REAL</b> Random Dice Genarator.
 send /help for more info.
 """
 
-
-
 def start(update, context):
     update.message.reply_text(start_text, 
         parse_mode=ParseMode.HTML)
@@ -42,6 +40,15 @@ if you want to generate random dice, just send a message with this formation:
 
 <b>first number is the amount of dices (how many dices you want) and the second one is each dice range,
 for example in here we have 3 dices with a range of 1 to 10 numbers.</b>
+
+
+<b><i>Update V2:</i></b>
+In the latest update you can add plus modifier
+e.x:
+
+    <i>6d10+7</i>
+
+This command generates the dices as always, but at the end adds 7 to the result.
 ---------------------------------------
 That's it for now, i hope you enjoy the bot.
 
@@ -54,7 +61,7 @@ https://github.com/mamdos/dicebot
 
 def dice(text):
     random_numbers = list()
-    text = text.split('d')
+    text = split('d|\+', text)
     for i in range(int(text[0])):
         number = random.randint(1, int(text[1]))
         random_numbers.append(number)
@@ -63,9 +70,12 @@ def dice(text):
 def dice_send(update, context):
     text = update.message.text
     random_numbers = dice(text)
+    parametrs = split('d|\+', text)
     send_string = ''
     sum_rand = 0
     counter = 0
+
+
     for this_number in random_numbers:
         sum_rand += this_number
         if counter != (len(random_numbers)-1):
@@ -73,8 +83,13 @@ def dice_send(update, context):
         else:
             send_string += str(this_number)
         counter += 1
-
-    send_string += f"= {str(sum_rand)}"
+    
+    if len(parametrs) == 3:
+        modifier = int(parametrs[2])
+        modified = sum_rand + modifier
+        send_string += f" = {str(sum_rand)} + {modifier} = {modified}"
+    else:
+        send_string += f" = {str(sum_rand)}"
 
     update.message.reply_text(send_string)
 def main():
@@ -83,7 +98,7 @@ def main():
     
     start_command = CommandHandler('start', start)
     help_command = CommandHandler('help', help)
-    dice_handler = MessageHandler(Filters.regex('^\d+d\d+$') & (~Filters.command), dice_send)
+    dice_handler = MessageHandler(Filters.regex('^\d+d\d+$') | Filters.regex('^\d+d\d+\+\d+$') & (~Filters.command), dice_send)
     dispatcher.add_handler(start_command)
     dispatcher.add_handler(help_command)
     dispatcher.add_handler(dice_handler)
