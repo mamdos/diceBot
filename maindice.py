@@ -1,5 +1,6 @@
 import logging
 import random
+from re import split
 
 from reqs import TOKEN
 from telegram.ext import (
@@ -14,11 +15,12 @@ logging.basicConfig(format='%(asctime)s -- %(name)s -- %(levelname)s -- %(messag
                     level=logging.INFO)
 
 
+
 # some text variables
 start_text = """
 Hiiiiii 
-i am dicebot; 
-a totaly real random dice genarator bot.
+I am DiceBot; 
+A <b>COMPLETELY REAL</b> Random Dice Genarator.
 
 send /help for more info.
 """
@@ -27,14 +29,14 @@ send /help for more info.
 
 def start(update, context):
     update.message.reply_text(start_text, 
-        )
+        parse_mode=ParseMode.HTML)
 
 def help(update, context):
     name = update.effective_user.first_name
     update.message.reply_text(f"""
 Welcome {name} 
 ---------------------------------------
-if you want to generate random dice, just send a message to me with this formation:
+if you want to generate random dice, just send a message with this formation:
 
     <i>3d10</i>
 
@@ -45,7 +47,7 @@ That's it for now, i hope you enjoy the bot.
 
 
 if you are a developer you can reach to source code through this link:
-www.github.com/mamdos/dicebot
+https://github.com/mamdos/dicebot
 
     """,
         parse_mode=ParseMode.HTML)
