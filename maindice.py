@@ -14,7 +14,7 @@ from telegram import ParseMode
 logging.basicConfig(format='%(asctime)s -- %(name)s -- %(levelname)s -- %(message)s', 
                     level=logging.INFO)
 
-
+logger = logging.getLogger(__name__)
 
 # some text variables
 start_text = """
@@ -42,13 +42,15 @@ if you want to generate random dice, just send a message with this formation:
 for example in here we have 3 dices with a range of 1 to 10 numbers.</b>
 
 
-<b><i>Update V2:</i></b>
-In the latest update you can add plus modifier
+<b><i>Update V2.1:</i></b>
+In the latest update you can add modifiers
 e.x:
 
-    <i>6d10+7</i>
+    <i>6d10+7</i> AND <i>5d6-3</i>
 
-This command generates the dices as always, but at the end adds 7 to the result.
+
+In first example, That command generates the dices as always, but at the end adds 7 to the result.
+In second one, The command generates the dices as always, but at the end reduces 3 from the result.
 ---------------------------------------
 That's it for now, i hope you enjoy the bot.
 
@@ -61,7 +63,7 @@ https://github.com/mamdos/dicebot
 
 def dice(text):
     random_numbers = list()
-    text = split('d|\+', text)
+    text = split('d|\+|-', text)
     for i in range(int(text[0])):
         number = random.randint(1, int(text[1]))
         random_numbers.append(number)
@@ -69,8 +71,9 @@ def dice(text):
 
 def dice_send(update, context):
     text = update.message.text
+    username = update.effective_user.username
     random_numbers = dice(text)
-    parametrs = split('d|\+', text)
+    parametrs = split('d|\+|-', text)
     send_string = ''
     sum_rand = 0
     counter = 0
@@ -78,27 +81,36 @@ def dice_send(update, context):
 
     for this_number in random_numbers:
         sum_rand += this_number
-        if counter != (len(random_numbers)-1):
+        if counter == 0:
+            send_string += f"({this_number} + "
+        elif counter != (len(random_numbers)-1) and counter != 0:
             send_string += f"{str(this_number)} + "
         else:
-            send_string += str(this_number)
+            send_string += f"{str(this_number)})"
         counter += 1
     
     if len(parametrs) == 3:
         modifier = int(parametrs[2])
-        modified = sum_rand + modifier
-        send_string += f" = {str(sum_rand)} + {modifier} = {modified}"
+        if text.find('-') != -1:
+            modified = sum_rand - modifier
+            send_string += f" - {modifier} = {modified}"
+        else:
+            modified = sum_rand + modifier
+            send_string += f" + {modifier} = {modified}"
+
     else:
         send_string += f" = {str(sum_rand)}"
 
     update.message.reply_text(send_string)
+
 def main():
     updater = Updater(token= TOKEN) 
     dispatcher = updater.dispatcher
     
     start_command = CommandHandler('start', start)
     help_command = CommandHandler('help', help)
-    dice_handler = MessageHandler(Filters.regex('^\d+d\d+$') | Filters.regex('^\d+d\d+\+\d+$') & (~Filters.command), dice_send)
+    dice_handler = MessageHandler(Filters.regex('^\d+d\d+$') | Filters.regex('^\d+d\d+\+\d+$') | Filters.regex('^\d+d\d+-\d+')
+                        & (~Filters.command), dice_send)
     dispatcher.add_handler(start_command)
     dispatcher.add_handler(help_command)
     dispatcher.add_handler(dice_handler)
