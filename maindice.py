@@ -109,7 +109,7 @@ def main():
     
     start_command = CommandHandler('start', start)
     help_command = CommandHandler('help', help)
-    dice_handler = MessageHandler(Filters.regex('^\d+d\d+$') | Filters.regex('^\d+d\d+\+\d+$') | Filters.regex('^\d+d\d+-\d+')
+    dice_handler = MessageHandler(Filters.regex('^\d+d\d+$') | Filters.regex('^\d+d\d+\+\d+$') | Filters.regex('^\d+d\d+-\d+$')
                         & (~Filters.command), dice_send)
     dispatcher.add_handler(start_command)
     dispatcher.add_handler(help_command)
