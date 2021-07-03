@@ -71,7 +71,7 @@ def dice(numbers):
 def dice_send(update, context):
     text = update.message.text
     words = re.split('\+|d|\s|-', text)
-
+    fault = False
 
     for i in range(len(words)):
         try:
@@ -106,17 +106,24 @@ def dice_send(update, context):
         
         if len(words) == 3:
             modifier = int(words[2])
-            if text.find('-') != -1:
+            if text.find('-') != -1 and text.find('+') == -1:
                 modified = sum_rand - modifier
                 send_string += f" - {modifier} = {modified}"
-            else:
+            elif text.find('+') != -1 and text.find('-') == -1:
                 modified = sum_rand + modifier
                 send_string += f" + {modifier} = {modified}"
+            else:
+                fault = True
 
         else:
             send_string += f" = {str(sum_rand)}"
 
-        update.message.reply_text(send_string)
+        if fault == False:
+            update.message.reply_text(send_string)
+        else:
+            update.message.reply_text("Please enter arguments correctly")
+
+
 
 def main():
     updater = Updater(token= TOKEN) 
@@ -124,7 +131,7 @@ def main():
     
     start_command = CommandHandler('start', start)
     help_command = CommandHandler('help', help)
-    dice_handler = MessageHandler(Filters.regex('^\d+.+\d+$')
+    dice_handler = MessageHandler(Filters.regex('^\d+[\sd]+\d+[\s\+-]+\d+$')
                         & (~Filters.command), dice_send)
     dispatcher.add_handler(start_command)
     dispatcher.add_handler(help_command)
