@@ -1,6 +1,6 @@
 import logging
 import random
-from re import split
+import re
 
 from reqs import TOKEN
 from telegram.ext import (
@@ -61,47 +61,62 @@ https://github.com/mamdos/dicebot
     """,
         parse_mode=ParseMode.HTML)
 
-def dice(text):
+def dice(numbers):
     random_numbers = list()
-    text = split('d|\+|-', text)
-    for i in range(int(text[0])):
-        number = random.randint(1, int(text[1]))
+    for i in range(int(numbers[0])):
+        number = random.randint(1, int(numbers[1]))
         random_numbers.append(number)
     return random_numbers
 
 def dice_send(update, context):
     text = update.message.text
-    username = update.effective_user.username
-    random_numbers = dice(text)
-    parametrs = split('d|\+|-', text)
-    send_string = ''
-    sum_rand = 0
-    counter = 0
+    words = re.split('\+|d|\s|-', text)
 
 
-    for this_number in random_numbers:
-        sum_rand += this_number
-        if counter == 0:
-            send_string += f"({this_number} + "
-        elif counter != (len(random_numbers)-1) and counter != 0:
-            send_string += f"{str(this_number)} + "
-        else:
-            send_string += f"{str(this_number)})"
-        counter += 1
+    for i in range(len(words)):
+        try:
+            words.remove('')
+        except:
+            break
     
-    if len(parametrs) == 3:
-        modifier = int(parametrs[2])
-        if text.find('-') != -1:
-            modified = sum_rand - modifier
-            send_string += f" - {modifier} = {modified}"
+    regexcp = re.compile(r'^\d+$')
+    count = 0
+    for num in words :
+        if regexcp.search(num):
+            count += 1
+
+
+    if count == len(words):
+        username = update.effective_user.username
+        random_numbers = dice(words)
+        send_string = ''
+        sum_rand = 0
+        counter = 0
+
+
+        for this_number in random_numbers:
+            sum_rand += this_number
+            if counter == 0:
+                send_string += f"({this_number} + "
+            elif counter != (len(random_numbers)-1) and counter != 0:
+                send_string += f"{str(this_number)} + "
+            else:
+                send_string += f"{str(this_number)})"
+            counter += 1
+        
+        if len(words) == 3:
+            modifier = int(words[2])
+            if text.find('-') != -1:
+                modified = sum_rand - modifier
+                send_string += f" - {modifier} = {modified}"
+            else:
+                modified = sum_rand + modifier
+                send_string += f" + {modifier} = {modified}"
+
         else:
-            modified = sum_rand + modifier
-            send_string += f" + {modifier} = {modified}"
+            send_string += f" = {str(sum_rand)}"
 
-    else:
-        send_string += f" = {str(sum_rand)}"
-
-    update.message.reply_text(send_string)
+        update.message.reply_text(send_string)
 
 def main():
     updater = Updater(token= TOKEN) 
@@ -109,7 +124,7 @@ def main():
     
     start_command = CommandHandler('start', start)
     help_command = CommandHandler('help', help)
-    dice_handler = MessageHandler(Filters.regex('^\d+d\d+$') | Filters.regex('^\d+d\d+\+\d+$') | Filters.regex('^\d+d\d+-\d+$')
+    dice_handler = MessageHandler(Filters.regex('^\d+.+\d+$')
                         & (~Filters.command), dice_send)
     dispatcher.add_handler(start_command)
     dispatcher.add_handler(help_command)
